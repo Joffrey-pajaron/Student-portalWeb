@@ -1,0 +1,20 @@
+﻿@model StudentPortal.Web.Models.Entities.Course
+
+<form id="createCourseForm" asp-action="Create" method="post">
+    <div class="mb-3">
+        <label asp-for="CourseName" class="form-label"></label>
+        <input asp-for="CourseName" class="form-control" />
+        <span asp-validation-for="CourseName" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control"></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <div class="text-end">
+        <button type="submit" class="btn btn-success">Save</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+    </div>
+</form>

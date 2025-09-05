@@ -1,0 +1,80 @@
+﻿@{
+    ViewData["Title"] = "Login";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+    }
+
+    /* Background container */
+    .bg-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url('/images/IMG_8354_2.jpg') no-repeat center center fixed;
+        background-size: cover;
+        opacity: 0.5; /* 50% opacity */
+        z-index: -1; /* keeps it behind content */
+    }
+
+    .university-title {
+        font-size: 3.5rem;
+        font-weight: 900;
+        text-align: center;
+        margin-top: 40px;
+        margin-bottom: 30px;
+        color: white;
+        text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
+    }
+
+    .card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 15px;
+    }
+</style>
+
+<!-- Background -->
+<div class="bg-container"></div>
+
+<div class="container">
+    <!-- University Title -->
+    <div class="university-title">
+        Eastern Visayas State University
+    </div>
+
+    <!-- Login Card -->
+    <div class="row justify-content-center mt-4">
+        <div class="col-md-4">
+            <div class="card shadow p-4">
+                <h2 class="text-center mb-4">Login</h2>
+
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert alert-danger">@ViewBag.Error</div>
+                }
+
+                <form asp-action="Login" method="post">
+                    <div class="form-group mb-3">
+                        <label for="username">Username</label>
+                        <input type="text" name="username" class="form-control" required />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="password">Password</label>
+                        <input type="password" name="password" class="form-control" required />
+                    </div>
+
+                    <button type="submit" class="btn btn-danger w-100">Login</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,129 @@
+﻿@{
+    ViewData["Title"] = "Home";
+}
+
+<style>
+    /* Reset body and html */
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Landing Page */
+    .landing-page {
+        position: relative;
+        width: 100%;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        color: #000;
+        background: url('~/images/IMG_8354_2.jpg') no-repeat center center;
+        background-size: cover;
+    }
+
+        /* Overlay for text readability */
+        .landing-page::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.4);
+            z-index: 0;
+        }
+
+    /* Landing content above overlay */
+    .landing-content {
+        position: relative;
+        z-index: 1;
+        max-width: 1200px;
+        padding: 20px;
+    }
+
+    /* Title and subtitle */
+    .landing-title {
+        font-size: 5rem;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+
+    .landing-subtitle {
+        font-size: 2rem;
+        margin-bottom: 30px;
+    }
+
+    /* Logo */
+    .landing-logo {
+        max-width: 300px;
+        width: 100%;
+        height: auto;
+        margin-bottom: 40px;
+        transition: transform 0.5s ease;
+    }
+
+    /* Button */
+    .btn-cta {
+        background-color: #d32f2f;
+        color: #fff;
+        padding: 15px 30px;
+        font-size: 1.2rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin: 5px;
+    }
+
+        .btn-cta:hover {
+            background-color: #b71c1c;
+            transform: translateY(-3px);
+        }
+
+    /* About section */
+    .about-section {
+        padding: 80px 20px;
+        background-color: #f8f8f8;
+        text-align: center;
+    }
+
+        .about-section h2 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .about-section p {
+            font-size: 1.5rem;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+
+</style>
+
+<!-- Landing Page -->
+<div class="landing-page">
+    <div class="landing-content">
+        <h1 class="landing-title">Welcome to Student Portal</h1>
+        <p class="landing-subtitle">Manage students, courses, and more from here.</p>
+        <img src="~/images/EVSU_Official_Logo.png" alt="Student Portal Logo" class="landing-logo">
+    
+    </div>
+</div>
+
+<!-- About Section -->
+<div class="about-section">
+    <h2>About Student Portal</h2>
+    <p>
+        This portal allows administrators to manage student records, courses, and subscriptions
+        efficiently. Built with ASP.NET Core, it provides a responsive, modern interface
+        for all your educational management needs.
+    </p>
+</div>

@@ -1,0 +1,107 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+
+
+/* Search box styling */
+.dataTables_filter input {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 6px 12px;
+    width: 250px;
+    font-size: 14px;
+}
+
+/* Length dropdown styling */
+.dataTables_length select {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 14px;
+}
+
+/* Align labels nicely */
+.dataTables_length label,
+.dataTables_filter label {
+    font-weight: 500;
+    margin-right: 8px;
+}
+
+/* Default pagination buttons */
+.dataTables_paginate .paginate_button {
+    padding: 6px 12px;
+    margin: 2px;
+    border-radius: 6px;
+    background: #f0f0f0;
+    color: #333 !important;
+}
+
+    /* Current page */
+    .dataTables_paginate .paginate_button.current {
+        background: #007bff !important;
+        color: white !important;
+    }
+
+    /* Hover */
+    .dataTables_paginate .paginate_button:hover {
+        background: #0056b3;
+        color: white !important;
+    }
+
+
+.header {
+    border-bottom: 2px solid #b30000; /* darker red line */
+}
+
+    .header h1 {
+        font-weight: 600;
+    }
+
+    .header .nav-link {
+        margin-left: 20px;
+        font-weight: 500;
+        transition: color 0.2s;
+    }
+
+        .header .nav-link:hover {
+            color: #ffd700; /* golden hover */
+        }
+
+
+body {
+    padding-top: 10px;
+    height:800px;
+}
+
+table.dataTable.table-bordered {
+    
+    border-top: 1px solid #dee2e6 !important;
+}
+
+/* Move modal closer to top of screen */
+#editCourseModal .modal-dialog {
+    margin-top: 20px !important;
+}
+
+/* Reduce extra white space inside modal */
+#editCourseModal .modal-body {
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+}
+  

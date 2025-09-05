@@ -1,0 +1,206 @@
+﻿@{
+    ViewData["Title"] = "Students";
+}
+
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css">
+
+<h2>Students</h2>
+
+<!-- Anti-forgery token -->
+@Html.AntiForgeryToken()
+
+<button class="btn btn-success mb-3" id="addStudentBtn">Add New Student</button>
+
+<table class="table table-bordered table-striped" id="studentsTable" style="width:100%">
+    <thead>
+        <tr>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Email</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+</table>
+
+<!-- Modal for Add/Edit -->
+<div class="modal fade" id="studentModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Student</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="studentId" />
+
+                <div class="mb-3">
+                    <label for="firstName" class="form-label">First Name</label>
+                    <input type="text" class="form-control" id="firstName" required />
+                </div>
+
+                <div class="mb-3">
+                    <label for="lastName" class="form-label">Last Name</label>
+                    <input type="text" class="form-control" id="lastName" required />
+                </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" required />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveStudentBtn">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .dataTables_filter input.form-control {
+        width: 240px !important;
+        display: inline-block !important;
+    }
+</style>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        $(document).ready(function () {
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            // DataTable
+            var table = $('#studentsTable').DataTable({
+               dom: '<"row mb-3"<"col-sm-6"l><"col-sm-6 text-end"f>>rt<"row mt-3"<"col-sm-6"i><"col-sm-6 text-end"p>>',
+                ajax: {
+                    url: '@Url.Action("GetStudents", "Students")',
+                    type: 'GET',
+                    dataSrc: 'data'
+                },
+                columns: [
+                    { data: 'firstName' },
+                    { data: 'lastName' },
+                    { data: 'email' },
+                    {
+                        data: 'id',
+                        render: function (data) {
+                            return `
+                                <button class="btn btn-sm btn-warning edit-btn" data-id="${data}">Edit</button>
+                                <button class="btn btn-sm btn-danger delete-btn" data-id="${data}">Delete</button>
+                            `;
+                        }
+                    }
+                ]
+            });
+
+            // Add button
+         $('#addStudentBtn').click(function () {
+                $('#studentId, #firstName, #lastName, #email').val('');
+                $('.modal-title').text('Add New Student');
+                new bootstrap.Modal(document.getElementById('studentModal')).show();
+            });
+
+
+
+            // Save Add/Edit
+            $('#saveStudentBtn').click(function () {
+                var id = $('#studentId').val();
+                var student = {
+                    ...(id ? { Id: id } : {}),
+                    FirstName: $('#firstName').val().trim(),
+                    LastName: $('#lastName').val().trim(),
+                    Email: $('#email').val().trim()
+                };
+
+                if (!student.FirstName || !student.LastName || !student.Email ) {
+                    Swal.fire('Error', 'All fields are required', 'error');
+                    return;
+                }
+
+                var url = student.Id && student.Id != 0
+                ? '@Url.Action("Edit", "Students")'   // use your Edit controller
+                : '@Url.Action("Add", "Students")';   // otherwise Add
+
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(student),
+                    success: function (res) {
+                        if (res.success) {
+                            var modal = bootstrap.Modal.getInstance(document.getElementById('studentModal'));
+                            modal.hide();
+                            table.ajax.reload(null, false);
+                            Swal.fire('Success!', 'Student saved successfully', 'success');
+                        } else {
+                            Swal.fire('Error', res.message, 'error');
+                        }
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'Server error occurred', 'error');
+                    }
+                });
+            });
+
+
+         
+                   // Edit button
+        $('#studentsTable').on('click', '.edit-btn', function () {
+            var id = $(this).data('id');
+            $.getJSON('/Students/GetStudent?id=' + id, function (res) {
+                if (res.success) {
+                    $('#studentId').val(res.data.id); // ✅ set hidden input
+                    $('#firstName').val(res.data.firstName);
+                    $('#lastName').val(res.data.lastName);
+                    $('#email').val(res.data.email);
+                    $('.modal-title').text('Edit Student');
+                    new bootstrap.Modal(document.getElementById('studentModal')).show();
+                } else {
+                    Swal.fire('Error', res.message, 'error');
+                }
+            });
+        });
+          
+
+
+
+            // Delete
+            $('#studentsTable tbody').on('click', '.delete-btn', function () {
+                var id = $(this).data('id');
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'This student will be permanently deleted!',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, delete it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '@Url.Action("Delete", "Students")',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            headers: { "RequestVerificationToken": token },
+                            data: JSON.stringify({ id: id }),
+                            success: function (res) {
+                                if (res.success) {
+                                    table.ajax.reload(null, false);
+                                    Swal.fire('Deleted!', 'Student deleted successfully', 'success');
+                                } else {
+                                    Swal.fire('Error', res.message, 'error');
+                                }
+                            },
+                            error: function () {
+                                Swal.fire('Error', 'Server error occurred', 'error');
+                            }
+                        });
+                    }
+                });
+            });
+
+        });
+    </script>
+}
