@@ -1,8 +1,9 @@
 ﻿using Dapper;
-using Microsoft.Data.SqlClient;
 using StudentPortal.Web.Data;
 using StudentPortal.Web.Models.Entities;
+using System.Collections.Generic;
 using System.Data;
+using System.Threading.Tasks;
 
 namespace StudentPortal.Web.Repositories
 {
@@ -15,69 +16,49 @@ namespace StudentPortal.Web.Repositories
             _context = context;
         }
 
-        private IDbConnection CreateConnection() => _context.CreateConnection();
-
-        public async Task<IEnumerable<Enrollment>> GetAllAsync()
+        // Enroll student in a course
+        public async Task EnrollStudentAsync(int studentId, int courseId)
         {
-            using var conn = CreateConnection();
-            string sql = @"
-                SELECT e.Id, e.StudentId, e.CourseId, e.EnrollmentDate,
-                       s.FirstName + ' ' + s.LastName AS StudentName,
-                       c.CourseName
-                FROM Enrollments e
-                JOIN Students s ON e.StudentId = s.Id
-                JOIN Courses c ON e.CourseId = c.Id";
-            return await conn.QueryAsync<Enrollment>(sql);
-        }
+            var sql = @"INSERT INTO Enrollments (Id, StudentId, CourseId, EnrollmentDate)
+                VALUES (@Id, @StudentId, @CourseId, GETDATE())";
 
-        public async Task<Enrollment?> GetByIdAsync(Guid id)
-        {
-            using var conn = CreateConnection();
-            string sql = @"
-                SELECT e.Id, e.StudentId, e.CourseId, e.EnrollmentDate,
-                       s.FirstName + ' ' + s.LastName AS StudentName,
-                       c.CourseName
-                FROM Enrollments e
-                JOIN Students s ON e.StudentId = s.Id
-                JOIN Courses c ON e.CourseId = c.Id
-                WHERE e.Id = @Id";
-            return await conn.QueryFirstOrDefaultAsync<Enrollment>(sql, new { Id = id });
-        }
-
-        public async Task<Enrollment> AddAsync(Enrollment enrollment)
-        {
-            using var conn = CreateConnection();
-
-            // 1️⃣ Insert enrollment, let SQL Server generate the Id (assuming Id is INT IDENTITY)
-            string insertSql = @"
-        INSERT INTO Enrollments (StudentId, CourseId, EnrollmentDate)
-        VALUES (@StudentId, @CourseId, GETDATE());
-        SELECT CAST(SCOPE_IDENTITY() AS int);"; // Returns the newly generated Id
-
-            // 2️⃣ Execute insert and get new Id
-            var newId = await conn.ExecuteScalarAsync<int>(insertSql, enrollment);
-            enrollment.Id = newId; // assign it to object
-
-            // 3️⃣ Retrieve the full enrollment info with student name and course name
-            string selectSql = @"
-        SELECT e.Id, e.StudentId, e.CourseId, e.EnrollmentDate,
-               s.FirstName + ' ' + s.LastName AS StudentName,
-               c.CourseName
-        FROM Enrollments e
-        JOIN Students s ON e.StudentId = s.Id
-        JOIN Courses c ON e.CourseId = c.Id
-        WHERE e.Id = @Id";
-
-            return await conn.QuerySingleAsync<Enrollment>(selectSql, new { Id = newId });
+            using (var connection = _context.CreateConnection())
+            {
+                await connection.ExecuteAsync(sql, new
+                {
+                    Id = Guid.NewGuid(),
+                    StudentId = studentId,
+                    CourseId = courseId
+                });
+            }
         }
 
 
-        public async Task<bool> DeleteAsync(Guid id)
+
+
+        // Get all courses for a student
+        // Get all courses for a student
+        public async Task<IEnumerable<dynamic>> GetCoursesByStudentAsync(int studentId)
         {
-            using var conn = CreateConnection();
-            string sql = "DELETE FROM Enrollments WHERE Id = @Id";
-            int rows = await conn.ExecuteAsync(sql, new { Id = id });
-            return rows > 0;
+            var sql = @"SELECT e.Id AS EnrollmentId, c.Id, c.CourseName, c.Description
+                FROM Courses c
+                INNER JOIN Enrollments e ON c.Id = e.CourseId
+                WHERE e.StudentId = @StudentId";
+
+            using (var connection = _context.CreateConnection())
+            {
+                return await connection.QueryAsync(sql, new { StudentId = studentId });
+            }
+        }
+
+        // Drop enrollment (remove student from a course)
+        public async Task<int> DropEnrollmentAsync(Guid enrollmentId)
+        {
+            var sql = @"DELETE FROM Enrollments WHERE Id = @EnrollmentId";
+            using (var connection = _context.CreateConnection())
+            {
+                return await connection.ExecuteAsync(sql, new { EnrollmentId = enrollmentId });
+            }
         }
     }
 }

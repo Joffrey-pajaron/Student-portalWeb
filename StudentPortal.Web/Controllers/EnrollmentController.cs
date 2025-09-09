@@ -1,76 +1,100 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using StudentPortal.Web.Models.Entities;
+using Microsoft.EntityFrameworkCore;
 using StudentPortal.Web.Repositories;
 using StudentPortal.Web.Repostories;
+using System.Threading.Tasks;
 
 namespace StudentPortal.Web.Controllers
 {
     public class EnrollmentController : Controller
-    {
+    {   
+
+        private readonly EnrollmentRepository _enrollmentRepo;
         private readonly IStudentRepository _studentRepo;
         private readonly CourseRepository _courseRepo;
-        private readonly EnrollmentRepository _repo;
 
-        public EnrollmentController(EnrollmentRepository repo, IStudentRepository studentRepo, CourseRepository courseRepo)
+        public EnrollmentController(
+            EnrollmentRepository enrollmentRepo,
+            IStudentRepository studentRepo,
+            CourseRepository courseRepo)
         {
-            _repo = repo;
+            _enrollmentRepo = enrollmentRepo;
             _studentRepo = studentRepo;
             _courseRepo = courseRepo;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetStudents()
-        {
-            var students = await _studentRepo.GetAllAsync();
-            return Json(students);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetCourses()
-        {
-            var courses = await _courseRepo.GetAllAsync();
-            return Json(courses);
-        }
-
-        [HttpGet]
+        // Load the page
         public IActionResult Index()
         {
             return View();
         }
 
+        // Search student by Id
         [HttpGet]
-        public async Task<IActionResult> GetEnrollments()
+        public async Task<JsonResult> GetStudent(int id)
         {
-            var enrollments = await _repo.GetAllAsync();
-            return Json(new { data = enrollments });
+            var student = await _studentRepo.GetByIdAsync(id);
+            if (student == null)
+                return Json(new { success = 0, message = "Student not found" });
+
+            return Json(new { success = 1, data = student });
         }
 
-        [HttpPost]
-        public async Task<IActionResult> SaveEnrollment([FromBody] Enrollment enrollment)
+        // Get student courses
+        [HttpGet]
+        public async Task<JsonResult> GetStudentCourses(int studentId)
         {
-            if (enrollment == null)
-                return BadRequest(new { success = false, message = "Invalid enrollment data" });
-
             try
             {
-                await _repo.AddAsync(enrollment);
-                return Ok(new { success = true, message = "Enrollment added successfully" });
+                var courses = await _enrollmentRepo.GetCoursesByStudentAsync(studentId);
+                return Json(new { success = 1, data = courses });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { success = false, message = ex.Message });
+                return Json(new { success = 0, message = ex.Message });
             }
         }
 
 
-        [HttpDelete]
-        public async Task<IActionResult> DeleteEnrollment(Guid id)
+        // Enroll student in a course
+        [HttpPost]
+        public async Task<JsonResult> Enroll([FromBody] EnrollRequest request)
         {
-            var deleted = await _repo.DeleteAsync(id);
-            if (!deleted)
-                return Json(new { success = false, message = "Enrollment not found" });
+            if (request == null)
+                return Json(new { success = 0, message = "Invalid request" });
 
-            return Json(new { success = true, message = "Enrollment deleted successfully" });
+            // studentId is now int, no conversion needed
+            await _enrollmentRepo.EnrollStudentAsync(request.StudentId, request.CourseId);
+
+            return Json(new { success = 1, message = "Student enrolled successfully" });
+        }
+
+
+
+        // Drop enrollment
+        [HttpPost]
+        public async Task<JsonResult> Drop([FromBody] DropRequest request)
+        {
+            if (request == null)
+                return Json(new { success = 0, message = "Invalid request" });
+
+            var rows = await _enrollmentRepo.DropEnrollmentAsync(request.EnrollmentId);
+            return Json(new { success = rows > 0 });
+        }
+
+
+
+
+
+        public class EnrollRequest
+        {
+            public int StudentId { get; set; }
+            public int CourseId { get; set; }
+        }
+
+        public class DropRequest
+        {
+            public Guid EnrollmentId { get; set; }
         }
     }
 }
