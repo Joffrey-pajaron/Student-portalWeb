@@ -1,0 +1,76 @@
+﻿@{
+    ViewData["Title"] = "Subjects";
+}
+
+<h2>Subjects</h2>
+
+<div class="mb-3">
+    <input type="text" id="subjectName" placeholder="Enter subject name" class="form-control mb-2" />
+    <input type="number" id="instructorId" placeholder="Instructor ID (optional)" class="form-control mb-2" />
+    <button id="btnAddSubject" class="btn btn-primary">Add Subject</button>
+</div>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Subject ID</th>
+            <th>Subject Name</th>
+             <th>Instructor ID</th>
+            <th>Instructor Name</th>
+        </tr>
+    </thead>
+    <tbody id="subjectsTableBody"></tbody>
+</table>
+
+@section Scripts {
+    <script>
+        async function loadSubjects() {
+            const res = await fetch("/Subjects/GetSubjects");
+            const data = await res.json();
+            if (data.success === 1) {
+                const tbody = document.getElementById("subjectsTableBody");
+                tbody.innerHTML = "";
+                data.data.forEach(s => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${s.subjectId}</td>
+                            <td>${s.subjectName}</td>
+                            <td>${s.instructorId ?? ""}</td>
+                              <td>${s.fullName}</td>
+                        </tr>`;
+                });
+            } else {
+                alert(data.message || "Error loading subjects.");
+            }
+        }
+
+        document.getElementById("btnAddSubject").addEventListener("click", async () => {
+            const subjectName = document.getElementById("subjectName").value.trim();
+            const instructorId = document.getElementById("instructorId").value;
+
+            if (!subjectName) return alert("Subject name is required.");
+
+            const res = await fetch("/Subjects/Create", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    subjectName,
+                    instructorId: instructorId || null
+                })
+            });
+
+            const data = await res.json();
+            if (data.success === 1) {
+                alert("Subject added successfully!");
+                document.getElementById("subjectName").value = "";
+                document.getElementById("instructorId").value = "";
+                loadSubjects();
+            } else {
+                alert(data.message || "Error adding subject.");
+            }
+        });
+
+        // Load subjects on page load
+        loadSubjects();
+    </script>
+}

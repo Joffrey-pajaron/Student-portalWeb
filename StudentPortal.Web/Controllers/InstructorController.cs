@@ -20,19 +20,30 @@ namespace StudentPortal.Web.Controllers
             return View();
         }
 
-        // Fetch all instructors (used by DataTables)
+        // ✅ Fetch all instructors (used by DataTables)
         [HttpGet]
         public async Task<IActionResult> GetInstructors()
         {
-            var instructors = await _repo.GetAllAsync();
-            return Json(new { data = instructors });
+            try
+            {
+                var instructors = await _repo.GetAllAsync();
+                return Json(new { data = instructors }); // DataTables format
+            }
+            catch (Exception ex)
+            {
+                // Log to console (shows up in VS Output window)
+                Console.WriteLine("❌ ERROR in GetInstructors: " + ex.Message);
+
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
         }
 
-        // Fetch single instructor by Id
+
+        // ✅ Fetch single instructor by Id
         [HttpGet]
-        public async Task<IActionResult> GetInstructor(Guid id)
+        public async Task<IActionResult> GetInstructor(int id)
         {
-            if (id == Guid.Empty)
+            if (id <= 0)
                 return BadRequest(new { success = false, message = "Invalid instructor ID" });
 
             var instructor = await _repo.GetByIdAsync(id);
@@ -42,7 +53,7 @@ namespace StudentPortal.Web.Controllers
             return Ok(new { success = true, data = instructor });
         }
 
-        // Create or update an instructor
+        // ✅ Create or update an instructor
         [HttpPost]
         public async Task<IActionResult> SaveInstructor([FromBody] Instructor instructor)
         {
@@ -51,10 +62,10 @@ namespace StudentPortal.Web.Controllers
 
             try
             {
-                if (instructor.Id == Guid.Empty) // Create
+                if (instructor.Id == 0) // Create (new instructor, no Id yet)
                 {
-                    instructor.Id = Guid.NewGuid();
-                    await _repo.AddAsync(instructor);
+                    var newInstructor = await _repo.AddAsync(instructor);
+                    return Ok(new { success = true, data = newInstructor });
                 }
                 else // Update
                 {
@@ -63,9 +74,8 @@ namespace StudentPortal.Web.Controllers
                         return NotFound(new { success = false, message = "Instructor not found" });
 
                     await _repo.UpdateAsync(instructor);
+                    return Ok(new { success = true, data = instructor });
                 }
-
-                return Ok(new { success = true });
             }
             catch (Exception ex)
             {
@@ -73,11 +83,11 @@ namespace StudentPortal.Web.Controllers
             }
         }
 
-        // Delete instructor
+        // ✅ Delete instructor
         [HttpPost]
         public async Task<IActionResult> DeleteInstructor([FromBody] DeleteInstructorRequest data)
         {
-            if (data.Id == Guid.Empty)
+            if (data.Id <= 0)
                 return BadRequest(new { success = false, message = "Invalid instructor ID" });
 
             var deleted = await _repo.DeleteAsync(data.Id);
@@ -87,9 +97,10 @@ namespace StudentPortal.Web.Controllers
             return Ok(new { success = true, message = "Instructor deleted successfully" });
         }
 
+        // DTO for delete request
         public class DeleteInstructorRequest
         {
-            public Guid Id { get; set; }
+            public int Id { get; set; }
         }
     }
-    }
+}

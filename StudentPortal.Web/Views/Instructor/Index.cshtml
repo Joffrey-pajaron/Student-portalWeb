@@ -13,6 +13,7 @@
 <table class="table table-bordered table-striped" id="instructorsTable" style="width:100%">
     <thead>
         <tr>
+            <th>ID</th>
             <th>First Name</th>
             <th>Last Name</th>
             <th>Email</th>
@@ -72,6 +73,7 @@
                 dom: '<"row mb-3"<"col-sm-6"l><"col-sm-6 text-end"f>>rt<"row mt-3"<"col-sm-6"i><"col-sm-6 text-end"p>>',
                 ajax: '@Url.Action("GetInstructors", "Instructor")',
                 columns: [
+                    { data: 'id' },
                     { data: 'firstName' },
                     { data: 'lastName' },
                     { data: 'email' },
@@ -99,7 +101,7 @@
             $('#saveInstructorBtn').click(function () {
                 var id = $('#instructorId').val();
                 var instructor = {
-                    ...(id ? { Id: id } : {}),
+                    Id: id ? parseInt(id) : 0,
                     FirstName: $('#firstName').val().trim(),
                     LastName: $('#lastName').val().trim(),
                     Email: $('#email').val().trim(),
@@ -166,7 +168,7 @@
                         type: 'POST',
                         contentType: 'application/json',
                         headers: { "RequestVerificationToken": token }, // send anti-forgery token
-                        data: JSON.stringify({ id: id }),
+                        data: JSON.stringify({ id: parseInt(id) }),
                         success: function(res) {
                             if (res.success) {
                                 table.ajax.reload(null, false);

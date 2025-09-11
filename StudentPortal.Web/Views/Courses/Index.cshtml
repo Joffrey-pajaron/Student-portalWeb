@@ -51,6 +51,14 @@
     </div>
 </div>
 
+<div>
+    <h3>Assign Subjects to Course</h3>
+    <select id="courseSelect"></select>
+    <div id="subjectsList"></div>
+    <button id="assignSubjectsBtn">Assign Subjects</button>
+</div>
+
+
 <style>
     .dataTables_filter input.form-control {
         width: 240px !important;
@@ -64,6 +72,50 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
+        //subject assignment code
+            $(document).ready(function(){
+            // Load courses
+            $.get("/Courses/GetCourses", function(res){
+                if(res.success){
+                    res.data.forEach(c => {
+                        $("#courseSelect").append(`<option value="${c.Id}">${c.CourseName}</option>`);
+                    });
+                }
+            });
+
+            // Load all subjects as checkboxes
+            $.get("/CourseSubject/GetAllSubjects", function(res){
+                if(res.success){
+                    res.data.forEach(s => {
+                        $("#subjectsList").append(
+                            `<div><input type="checkbox" class="subjectCheckbox" value="${s.SubjectId}"/> ${s.SubjectName}</div>`
+                        );
+                    });
+                }
+            });
+
+            // Assign subjects button
+            $("#assignSubjectsBtn").click(function(){
+                let courseId = $("#courseSelect").val();
+                let selectedSubjects = $(".subjectCheckbox:checked").map(function(){ return $(this).val(); }).get();
+
+                $.ajax({
+                    url: "/CourseSubject/AddSubjectsToCourse",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({ courseId: courseId, subjectIds: selectedSubjects }),
+                    success: function(res){
+                        if(res.success){
+                            alert(res.message);
+                        } else {
+                            alert("Error: " + res.message);
+                        }
+                    }
+                });
+            });
+        });
+
+        //course code 
         $(document).ready(function () {
 
             // Anti-forgery token
