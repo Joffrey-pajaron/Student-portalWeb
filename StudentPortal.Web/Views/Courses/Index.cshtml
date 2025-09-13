@@ -51,13 +51,40 @@
     </div>
 </div>
 
-<div>
-    <h3>Assign Subjects to Course</h3>
-    <select id="courseSelect"></select>
-    <div id="subjectsList"></div>
-    <button id="assignSubjectsBtn">Assign Subjects</button>
+<div class="card mt-4 shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Assign Subjects to Course</h5>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <label for="courseSelect" class="form-label fw-bold">Select Course</label>
+            <select id="courseSelect" class="form-select"></select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">Select Subjects</label>
+            <div id="subjectsList" class="row row-cols-2"></div>
+        </div>
+
+        <button id="assignSubjectsBtn" class="btn btn-success">
+            <i class="bi bi-link-45deg"></i> Assign Subjects
+        </button>
+    </div>
 </div>
 
+<!-- NEW: Assigned Subjects Table -->
+<h5>Assigned Subjects</h5>
+<table class="table table-bordered table-sm" id="assignedSubjectsTable">
+    <thead>
+        <tr>
+            <th>Subject Name</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+</div>
+</div>
 
 <style>
     .dataTables_filter input.form-control {
@@ -78,21 +105,93 @@
             $.get("/Courses/GetCourses", function(res){
                 if(res.success){
                     res.data.forEach(c => {
-                        $("#courseSelect").append(`<option value="${c.Id}">${c.CourseName}</option>`);
+                       $("#courseSelect").append(`<option value="${c.id}">${c.courseName}</option>`);
                     });
                 }
             });
 
             // Load all subjects as checkboxes
-            $.get("/CourseSubject/GetAllSubjects", function(res){
-                if(res.success){
+          $.get("/CourseSubject/GetAllSubjects", function (res) {
+                if (res.success) {
                     res.data.forEach(s => {
-                        $("#subjectsList").append(
-                            `<div><input type="checkbox" class="subjectCheckbox" value="${s.SubjectId}"/> ${s.SubjectName}</div>`
-                        );
+                        $("#subjectsList").append(`
+                            <div class="col mb-2">
+                                <div class="form-check border rounded p-2">
+                                    <input type="checkbox" class="form-check-input subjectCheckbox" id="subject-${s.subjectId}" value="${s.subjectId}" />
+                                    <label class="form-check-label" for="subject-${s.subjectId}">${s.subjectName}</label>
+                                </div>
+                            </div>
+                        `);
                     });
                 }
             });
+
+                    // When course is selected, load its assigned subjects
+        $("#courseSelect").change(function(){
+            let courseId = $(this).val();
+            if(!courseId) return;
+
+            $.get("/CourseSubject/GetSubjectsByCourse?courseId=" + courseId, function(res){
+                if(res.success){
+                    let tbody = $("#assignedSubjectsTable tbody");
+                    tbody.empty();
+
+                    if(res.data.length === 0){
+                        tbody.append(`<tr><td colspan="2" class="text-muted">No subjects assigned</td></tr>`);
+                    } else {
+                        res.data.forEach(s => {
+                            tbody.append(`
+                                <tr>
+                                    <td>${s.subjectName}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-danger remove-subject-btn" data-id="${s.subjectId}" data-course="${courseId}">
+                                            Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                            `);
+                        });
+                    }
+                }
+            });
+        });
+
+        // Handle remove subject
+        $(document).on("click", ".remove-subject-btn", function(){
+            let subjectId = $(this).data("id");
+            let courseId = $(this).data("course");
+
+            $.ajax({
+                url: "/CourseSubject/RemoveSubjectFromCourse",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ courseId: courseId, subjectId: subjectId }),
+                success: function(res){
+                    if(res.success){
+                        // reload table
+                        $("#courseSelect").trigger("change");
+                        Swal.fire("Removed!", res.message, "success");
+                    } else {
+                        Swal.fire("Error", res.message, "error");
+                    }
+                }
+            });
+        });
+
+                // Load courses
+        $.get("/Courses/GetCourses", function(res){
+            if(res.success){
+                res.data.forEach((c, index) => {
+                    $("#courseSelect").append(`<option value="${c.id}">${c.courseName}</option>`);
+                });
+
+                // ✅ Trigger change for the first course
+                if(res.data.length > 0){
+                    $("#courseSelect").val(res.data[0].id).trigger("change");
+                }
+            }
+        });
+
 
             // Assign subjects button
             $("#assignSubjectsBtn").click(function(){
@@ -123,7 +222,7 @@
 
             // Initialize DataTable
             var table = $('#coursesTable').DataTable({
-               dom: '<"row mb-3"<"col-sm-6"l><"col-sm-6 text-end"f>>rt<"row mt-3"<"col-sm-6"i><"col-sm-6 text-end"p>>',
+               dom: '<"row mb-3"<"col-sm-6"l><"col-sm-6 text-end"f>>rt<"row mt-3"<"col-sm-6"i><"col-sm-6 text-en00d"p>>',
                 ajax: {
                     url: '@Url.Action("GetCourses", "Courses")',
                     type: 'GET',
