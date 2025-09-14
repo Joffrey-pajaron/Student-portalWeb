@@ -28,10 +28,18 @@ namespace StudentPortal.Web.Repositories
         {
             using var connection = CreateConnection();
             string sql = @"
-                SELECT s.SubjectId, s.SubjectName, s.InstructorId
+                SELECT 
+                    s.SubjectId,
+                    s.SubjectName,
+                    s.InstructorId,
+                    i.FirstName + ' ' + i.LastName AS InstructorName
                 FROM Subjects s
-                INNER JOIN CourseSubjects cs ON s.SubjectId = cs.SubjectId
-                WHERE cs.CourseId = @CourseId";
+                INNER JOIN CourseSubjects cs 
+                    ON s.SubjectId = cs.SubjectId
+                INNER JOIN Instructors i
+                    ON s.InstructorId = i.Id
+                WHERE cs.CourseId = @CourseId;
+                ";
 
             var subjects = await connection.QueryAsync<Subject>(sql, new { CourseId = courseId });
             return subjects.ToList();

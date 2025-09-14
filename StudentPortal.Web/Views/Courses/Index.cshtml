@@ -51,8 +51,8 @@
     </div>
 </div>
 
-<div class="card mt-4 shadow-sm">
-    <div class="card-header bg-primary text-white">
+<div class="card mt-4 mb-3 shadow-sm">
+    <div class="card-header bg-danger text-white">
         <h5 class="mb-0">Assign Subjects to Course</h5>
     </div>
     <div class="card-body">
@@ -73,16 +73,21 @@
 </div>
 
 <!-- NEW: Assigned Subjects Table -->
-<h5>Assigned Subjects</h5>
+<div class="card mt-4 mb-3 shadow-sm">
+<div class="card-header bg-danger text-white">
+    <h5 class="mb-0">Assigned Subjects</h5>
+</div>
 <table class="table table-bordered table-sm" id="assignedSubjectsTable">
     <thead>
         <tr>
             <th>Subject Name</th>
+            <th>Instructor Name</th>
             <th>Action</th>
         </tr>
     </thead>
     <tbody></tbody>
 </table>
+</div>
 </div>
 </div>
 
@@ -126,35 +131,46 @@
                 }
             });
 
-                    // When course is selected, load its assigned subjects
-        $("#courseSelect").change(function(){
+             // When course is selected, load its assigned subjects
+         $("#courseSelect").change(function(){
             let courseId = $(this).val();
-            if(!courseId) return;
+            if(courseId) {
+                loadAssignedSubjects(courseId);
+            }
+        });
 
+            //function for table load
+        function loadAssignedSubjects(courseId) {
             $.get("/CourseSubject/GetSubjectsByCourse?courseId=" + courseId, function(res){
                 if(res.success){
                     let tbody = $("#assignedSubjectsTable tbody");
                     tbody.empty();
 
+                    // Reset checkboxes first (enable everything)
+                    $(".subjectCheckbox").prop("disabled", false).prop("checked", false);
+
                     if(res.data.length === 0){
-                        tbody.append(`<tr><td colspan="2" class="text-muted">No subjects assigned</td></tr>`);
+                        tbody.append(`<tr><td colspan="3" class="text-muted">No subjects assigned</td></tr>`);
                     } else {
                         res.data.forEach(s => {
-                            tbody.append(`
-                                <tr>
-                                    <td>${s.subjectName}</td>
-                                    <td>
-                                        <button class="btn btn-sm btn-danger remove-subject-btn" data-id="${s.subjectId}" data-course="${courseId}">
-                                            Remove
-                                        </button>
-                                    </td>
-                                </tr>
-                            `);
+                            // Build table row
+                            const $tr = $("<tr>");
+                            $tr.append($("<td>").text(s.subjectName));
+                            $tr.append($("<td>").text(s.instructorName));
+                            const $btn = $(`<button class="btn btn-sm btn-danger remove-subject-btn">Remove</button>`)
+                                            .attr("data-id", s.subjectId)
+                                            .attr("data-course", courseId);
+                            $tr.append($("<td>").append($btn));
+                            tbody.append($tr);
+
+                            // Disable checkbox for already-assigned subjects
+                            $(`#subject-${s.subjectId}`).prop("disabled", true).prop("checked", false);
                         });
                     }
                 }
             });
-        });
+        }
+
 
         // Handle remove subject
         $(document).on("click", ".remove-subject-btn", function(){
@@ -205,9 +221,10 @@
                     data: JSON.stringify({ courseId: courseId, subjectIds: selectedSubjects }),
                     success: function(res){
                         if(res.success){
-                            alert(res.message);
+                            Swal.fire("Success", res.message, "success");
+                            loadAssignedSubjects(courseId); // 👈 refresh table + checkboxes
                         } else {
-                            alert("Error: " + res.message);
+                             Swal.fire("Error", res.message, "error");
                         }
                     }
                 });
