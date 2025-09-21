@@ -19,14 +19,13 @@ namespace StudentPortal.Web.Repositories
         // Enroll student in a course
         public async Task EnrollStudentAsync(int studentId, int courseId)
         {
-            var sql = @"INSERT INTO Enrollments (Id, StudentId, CourseId, EnrollmentDate)
-                VALUES (@Id, @StudentId, @CourseId, GETDATE())";
+            var sql = @"INSERT INTO Enrollments (StudentId, CourseId, EnrollmentDate)
+                VALUES (@StudentId, @CourseId, GETDATE())";
 
             using (var connection = _context.CreateConnection())
             {
                 await connection.ExecuteAsync(sql, new
                 {
-                    Id = Guid.NewGuid(),
                     StudentId = studentId,
                     CourseId = courseId
                 });
@@ -36,7 +35,7 @@ namespace StudentPortal.Web.Repositories
 
 
 
-        // Get all courses for a student
+
         // Get all courses for a student
         public async Task<IEnumerable<dynamic>> GetCoursesByStudentAsync(int studentId)
         {
@@ -52,7 +51,7 @@ namespace StudentPortal.Web.Repositories
         }
 
         // Drop enrollment (remove student from a course)
-        public async Task<int> DropEnrollmentAsync(Guid enrollmentId)
+        public async Task<int> DropEnrollmentAsync(int enrollmentId)
         {
             var sql = @"DELETE FROM Enrollments WHERE Id = @EnrollmentId";
             using (var connection = _context.CreateConnection())

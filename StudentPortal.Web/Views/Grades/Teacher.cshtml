@@ -1,0 +1,116 @@
+﻿@{
+    ViewData["Title"] = "Grade Entry";
+}
+
+<div class="container mt-4">
+    <h2>Grade Entry</h2>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="subjectSelect" class="form-label">Select Subject:</label>
+            <select id="subjectSelect" class="form-select" onchange="loadStudents()">
+                <option value="">-- Choose Subject --</option>
+            </select>
+        </div>
+    </div>
+
+    <table class="table table-bordered" id="studentsTable">
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Email</th>
+                <th>Current Grade</th>
+                <th>New Grade</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td colspan="5" class="text-center text-muted">Select a subject to load students</td></tr>
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+                // pass teacherId (hardcode 1 for now or get from logged-in user)
+        let teacherId = 1;
+
+        $.get(`/Grades/GetSubjectsByTeacher?teacherId=${teacherId}`, function (res) {
+            if (res.success === 1 && res.data.length > 0) {
+                res.data.forEach(s => {
+                    $("#subjectSelect").append(`<option value="${s.SubjectId}">${s.SubjectName}</option>`);
+                });
+            } else {
+                $("#subjectSelect").append(`<option value="">No subjects found</option>`);
+            }
+        });
+
+        });
+
+        function loadStudents() {
+            let subjectId = $("#subjectSelect").val();
+            if (!subjectId) return;
+
+          $.get(`/Grades/GetStudentsBySubject?subjectId=${subjectId}`, function (res) {
+            let tbody = $("#studentsTable tbody");
+            tbody.empty();
+
+            if (res.success === 1 && res.data.length > 0) {
+                res.data.forEach(stu => {
+                    tbody.append(`
+                        <tr>
+                            <td>${stu.FirstName} ${stu.LastName}</td>
+                            <td>${stu.Email}</td>
+                            <td>${stu.CurrentGrade ?? "N/A"}</td>
+                            <td><input type="text" class="form-control" id="grade-${stu.EnrollmentId}" value="${stu.CurrentGrade ?? ""}" /></td>
+                            <td><button class="btn btn-sm btn-success" onclick="saveGrade(${stu.EnrollmentId}, ${subjectId})">Save</button></td>
+                        </tr>
+                    `);
+                });
+            } else {
+                tbody.append(`<tr><td colspan="5" class="text-center text-muted">No students enrolled</td></tr>`);
+            }
+        });
+        }
+
+        function saveGrade(enrollmentId, subjectId) {
+            let grade = $(`#grade-${enrollmentId}`).val();
+
+            $.ajax({
+                url: "/Grades/AddGrade",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ enrollmentId: enrollmentId, subjectId: subjectId, grade: grade }),
+                success: function (res) {
+                    if (res.success === 1) {
+                        alert("Grade saved successfully!");
+                        loadStudents(); // refresh table
+                    } else {
+                        alert("Error saving grade.");
+                    }
+                }
+            });
+        }
+
+
+        function saveGrade(enrollmentId) {
+            let grade = $(`#grade-${enrollmentId}`).val();
+
+            $.ajax({
+                url: "/Grades/SaveGrade",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ enrollmentId: enrollmentId, grade: grade }),
+                success: function (res) {
+                    if (res.success === 1) {
+                        alert("Grade saved successfully!");
+                        loadStudents();
+                    } else {
+                        alert("Error saving grade.");
+                    }
+                }
+            });
+        }
+    </script>
+}

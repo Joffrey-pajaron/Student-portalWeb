@@ -94,7 +94,7 @@ namespace StudentPortal.Web.Controllers
 
         public class DropRequest
         {
-            public Guid EnrollmentId { get; set; }
+            public int EnrollmentId { get; set; }
         }
     }
 }

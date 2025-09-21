@@ -1,0 +1,30 @@
+﻿@{
+    ViewData["Title"] = "Grades Portal";
+}
+
+<div class="container mt-4">
+    <h2>Grades Portal</h2>
+    <p class="text-muted">Choose a section below:</p>
+
+    <div class="row mt-3">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">📘 Student Grades</h5>
+                    <p class="card-text">View your grades by entering your Student ID.</p>
+                    <a asp-controller="Grades" asp-action="Student" class="btn btn-primary">Go to Student View</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">👨‍🏫 Teacher Grade Entry</h5>
+                    <p class="card-text">Select a subject and update student grades.</p>
+                    <a asp-controller="Grades" asp-action="Teacher" class="btn btn-success">Go to Teacher View</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -35,7 +35,7 @@ builder.Services.AddScoped<InstructorRepository>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<CourseSubjectServiceRepository>();
 builder.Services.AddScoped<SubjectRepository>();
-builder.Services.AddScoped<SubjectRepository>();
+builder.Services.AddScoped<GradesRepository>();
 // Custom services
 builder.Services.AddTransient<AuthService>();
 

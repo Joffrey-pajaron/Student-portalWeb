@@ -1,0 +1,63 @@
+﻿@{
+    ViewData["Title"] = "My Grades";
+}
+
+<div class="container mt-4">
+    <h2>My Grades</h2>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label for="studentIdInput" class="form-label">Enter Student ID:</label>
+            <div class="input-group">
+                <input type="number" id="studentIdInput" class="form-control" placeholder="e.g. 1" />
+                <button class="btn btn-primary" type="button" onclick="loadGrades()">View Grades</button>
+            </div>
+        </div>
+    </div>
+
+    <table class="table table-bordered" id="gradesTable">
+        <thead>
+            <tr>
+                <th>Course</th>
+                <th>Subject</th>
+                <th>Grade</th>
+                <th>Last Updated</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td colspan="4" class="text-center text-muted">Enter a Student ID and click View Grades</td></tr>
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        function loadGrades() {
+            let studentId = $("#studentIdInput").val();
+            if (!studentId) {
+                alert("Please enter a student ID.");
+                return;
+            }
+
+            $.get(`/Grades/GetStudentGrades?studentId=${studentId}`, function (res) {
+                let tbody = $("#gradesTable tbody");
+                tbody.empty();
+
+                if (res.success === 1 && res.data.length > 0) {
+                    res.data.forEach(g => {
+                        tbody.append(`
+                            <tr>
+                                <td>${g.CourseName}</td>
+                                <td>${g.SubjectName}</td>
+                                <td>${g.Grade ?? "N/A"}</td>
+                                <td>${g.UpdatedAt ? g.UpdatedAt : g.CreatedAt}</td>
+                            </tr>
+                        `);
+                    });
+                } else {
+                    tbody.append(`<tr><td colspan="4" class="text-center text-muted">No grades found</td></tr>`);
+                }
+            });
+        }
+    </script>
+}
