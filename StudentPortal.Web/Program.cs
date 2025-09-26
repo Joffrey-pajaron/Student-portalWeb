@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using StudentPortal.Web.Data;
@@ -36,8 +37,20 @@ builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<CourseSubjectServiceRepository>();
 builder.Services.AddScoped<SubjectRepository>();
 builder.Services.AddScoped<GradesRepository>();
+
 // Custom services
 builder.Services.AddTransient<AuthService>();
+builder.Services.AddScoped<UserRepository>();
+
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+    });
+
+builder.Services.AddAuthorization();
 
 // ------------------ Build App ------------------
 var app = builder.Build();
@@ -48,12 +61,14 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseSession();
+
 
 // Default route
 app.MapControllerRoute(

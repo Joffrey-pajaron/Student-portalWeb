@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using StudentPortal.Web.Models.Entities;
 using StudentPortal.Web.Repositories;
 using System.Collections.Generic;
@@ -6,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace StudentPortal.Web.Controllers
 {
+    [Authorize(Roles = "Admin,Student")]
     public class CourseSubjectController : Controller
     {
         private readonly CourseSubjectServiceRepository _repository;

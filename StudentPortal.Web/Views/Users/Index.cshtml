@@ -1,0 +1,309 @@
+﻿@{
+    ViewData["Title"] = "Manage Users";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addUserModal">
+    Add New User
+</button>
+
+<table id="usersTable" class="table table-bordered table-striped" style="width:100%">
+    <thead>
+        <tr>
+            <th>UserId</th>
+            <th>Username</th>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+</table>
+
+<!-- ================= ADD USER MODAL ================= -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="addUserForm" method="post">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="mb-3">
+                        <label>Role</label>
+                        <select class="form-select" name="RoleId" id="roleSelect" required>
+                            <option value="">-- Select Role --</option>
+                            <option value="1">Admin</option>
+                            <option value="2">Instructor</option>
+                            <option value="3">Student</option>
+                        </select>
+                    </div>
+
+                    <!-- Search for Student -->
+                    <div class="mb-3" id="studentSearchDiv" style="display:none;">
+                        <label>Search Student</label>
+                        <input type="text" id="studentSearch" class="form-control" placeholder="Type student name..." autocomplete="off" />
+                        <div id="studentResults" class="list-group"></div>
+                    </div>
+
+                    <!-- Search for Instructor -->
+                    <div class="mb-3" id="instructorSearchDiv" style="display:none;">
+                        <label>Search Instructor</label>
+                        <input type="text" id="instructorSearch" class="form-control" placeholder="Type instructor name..." autocomplete="off" />
+                        <div id="instructorResults" class="list-group"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Username</label>
+                        <input type="text" class="form-control" name="Username" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Full Name</label>
+                        <input type="text" class="form-control" name="FullName" readonly />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Email</label>
+                        <input type="email" class="form-control" name="Email" readonly />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Password</label>
+                        <input type="password" class="form-control" name="Password" required />
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Save</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- ================= EDIT USER MODAL ================= -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="editUserForm" method="post">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="UserId" />
+
+                    <div class="mb-3">
+                        <label>Role</label>
+                        <select class="form-select" name="RoleId" required>
+                            <option value="">-- Select Role --</option>
+                            <option value="1">Admin</option>
+                            <option value="2">Instructor</option>
+                            <option value="3">Student</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Username</label>
+                        <input type="text" class="form-control" name="Username" readonly />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Full Name</label>
+                        <input type="text" class="form-control" name="FullName" readonly />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Email</label>
+                        <input type="email" class="form-control" name="Email" readonly />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Password</label>
+                        <input type="password" class="form-control" name="Password" />
+                        <small class="text-muted">Leave blank to keep current password</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var table = $('#usersTable').DataTable({
+                ajax: { url: '/Users/GetUsers', dataSrc: 'data' },
+                columns: [
+                    { data: 'userId' },
+                    { data: 'username' },
+                    { data: 'fullName' },
+                    { data: 'email' },
+                    { data: 'roleName' },
+                    {
+                        data: 'userId',
+                        render: function (data) {
+                            return `
+                                <button class="btn btn-sm btn-primary editBtn" data-id="${data}">Edit</button>
+                                <button class="btn btn-sm btn-danger deleteBtn" data-id="${data}">Delete</button>`;
+                        }
+                    }
+                ]
+            });
+                  // ================= OPEN EDIT MODAL =================
+        $('#usersTable').on('click', '.editBtn', function () {
+            var id = $(this).data('id');
+            $.get('/Users/GetUsers', function (res) {
+                var user = res.data.find(u => u.userId === id);
+                if (!user) return;
+
+                var form = $('#editUserForm');
+                form.find('[name=UserId]').val(user.userId);
+                form.find('[name=RoleId]').val(user.roleId);
+                form.find('[name=Username]').val(user.username);
+                form.find('[name=FullName]').val(user.fullName);
+                form.find('[name=Email]').val(user.email);
+                form.find('[name=Password]').val('');
+
+                $('#editUserModal').modal('show');
+            });
+        });
+
+        // ================= SUBMIT EDIT =================
+        $('#editUserForm').submit(function (e) {
+            e.preventDefault();
+
+            $.ajax({
+                url: '/Users/EditUser',
+                type: 'POST',
+                data: $(this).serialize(),
+                success: function (res) {
+                    if (res.success) {
+                        $('#editUserModal').modal('hide');
+                        $('#editUserForm')[0].reset();
+                        $('#usersTable').DataTable().ajax.reload();
+                    } else {
+                        alert('Failed to update user.');
+                    }
+                }
+            });
+        });
+
+            // ================= ROLE CHANGE =================
+            $('#roleSelect').on('change', function () {
+                let role = $(this).val();
+                if (role == 2) { // Instructor
+                    $('#studentSearchDiv').hide();
+                    $('#instructorSearchDiv').show();
+                } else if (role == 3) { // Student
+                    $('#instructorSearchDiv').hide();
+                    $('#studentSearchDiv').show();
+                } else {
+                    $('#studentSearchDiv,#instructorSearchDiv').hide();
+                }
+            });
+
+            // ================= SEARCH STUDENT =================
+            $('#studentSearch').on('keyup', function () {
+                let query = $(this).val();
+                if (query.length < 2) {
+                    $('#studentResults').empty();
+                    return;
+                }
+                $.get('/Users/SearchStudents', { q: query }, function (data) {
+                    let results = '';
+                    data.forEach(s => {
+                        results += `<button type="button" class="list-group-item list-group-item-action studentOption"
+                                    data-id="${s.Id}" data-name="${s.FullName}" data-email="${s.Email}">
+                                    ${s.FullName} (${s.Email})
+                                </button>`;
+                    });
+                    $('#studentResults').html(results);
+                });
+            });
+
+            $(document).on('click', '.studentOption', function () {
+                let name = $(this).data('name');
+                let email = $(this).data('email');
+                $('#addUserForm [name=FullName]').val(name);
+                $('#addUserForm [name=Email]').val(email);
+                $('#addUserForm [name=Username]').val(name.replace(/\s+/g, '').toLowerCase());
+                $('#studentResults').empty();
+                $('#studentSearch').val(name);
+            });
+
+            // ================= SEARCH INSTRUCTOR =================
+            $('#instructorSearch').on('keyup', function () {
+                let query = $(this).val();
+                if (query.length < 2) {
+                    $('#instructorResults').empty();
+                    return;
+                }
+                $.get('/Users/SearchInstructors', { q: query }, function (data) {
+                    let results = '';
+                    data.forEach(i => {
+                        results += `<button type="button" class="list-group-item list-group-item-action instructorOption"
+                                    data-id="${i.Id}" data-name="${i.FullName}" data-email="${i.Email}">
+                                    ${i.FullName} (${i.Email})
+                                </button>`;
+                    });
+                    $('#instructorResults').html(results);
+                });
+            });
+
+            $(document).on('click', '.instructorOption', function () {
+                let name = $(this).data('name');
+                let email = $(this).data('email');
+                $('#addUserForm [name=FullName]').val(name);
+                $('#addUserForm [name=Email]').val(email);
+                $('#addUserForm [name=Username]').val(name.replace(/\s+/g, '').toLowerCase());
+                $('#instructorResults').empty();
+                $('#instructorSearch').val(name);
+            });
+
+            // ================= ADD USER =================
+            $('#addUserForm').submit(function (e) {
+                e.preventDefault();
+                $.post('/Users/AddUser', $(this).serialize(), function (res) {
+                    if (res.success) {
+                        $('#addUserModal').modal('hide');
+                        $('#addUserForm')[0].reset();
+                        table.ajax.reload();
+                    }
+                });
+            });
+        });
+
+                // Delete User
+                // Delete User
+        $('#usersTable').on('click', '.deleteBtn', function () {
+            if (!confirm("Are you sure you want to delete this user?")) return;
+            var id = $(this).data('id');
+
+            $.ajax({
+                url: '/Users/DeleteUser',
+                type: 'POST',
+                data: {
+                    id: id,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (res) {
+                    if (res.success) {
+                        table.ajax.reload(null, false); // reload table without resetting pagination
+                    } else {
+                        alert('Failed to delete user.');
+                    }
+                }
+            });
+        });
+
+
+    </script>
+}

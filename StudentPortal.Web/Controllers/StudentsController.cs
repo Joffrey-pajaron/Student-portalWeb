@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using StudentPortal.Web.Models.Entities;
 using StudentPortal.Web.Repositories;
 using System.Threading.Tasks;
 
 namespace StudentPortal.Web.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class StudentsController : Controller
     {
         private readonly IStudentRepository _repository;
