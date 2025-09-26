@@ -1,12 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using StudentPortal.Web.Repositories;
 using System;
 using System.Threading.Tasks;
 
 namespace StudentPortal.Web.Controllers
 {
+    [Authorize(Roles = "Admin,Instructor,Student")]
     public class GradesController : Controller
-    {
+    {   
+
         private readonly GradesRepository _gradesRepo;
 
         public GradesController(GradesRepository gradesRepo)

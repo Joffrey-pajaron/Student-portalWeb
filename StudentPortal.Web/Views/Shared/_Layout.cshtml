@@ -1,6 +1,25 @@
 ﻿@using Microsoft.AspNetCore.Http
 @inject IHttpContextAccessor HttpContextAccessor
+@using System.Security.Claims
 
+@{
+    var user = HttpContextAccessor.HttpContext?.User;
+    var roleClaim = user?.FindFirst(ClaimTypes.Role)?.Value ?? "";
+
+    // Detect if current page is Login/Register
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    bool hideSidebarPage = controller == "Account" && (action == "Login" || action == "Register");
+
+    // Show sidebar only if user is authenticated and has a role
+    bool showSidebar = user?.Identity != null
+                       && user.Identity.IsAuthenticated
+                       && !string.IsNullOrEmpty(roleClaim)
+                       && !hideSidebarPage;
+
+    // Show header only if sidebar is visible
+    bool showHeader = showSidebar;
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,34 +27,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - StudentPortal.Web</title>
 
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css" />
-
-    <!-- Site-specific CSS -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 
     <style>
-        body {
-            min-height: 100vh;
+        html, body {
+            height: 100%;
             margin: 0;
         }
 
+        /* Sidebar */
         .sidebar {
             width: 220px;
-            background-color: #dc3545; /* Bootstrap danger red */
+            background-color: #dc3545;
             color: white;
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
+            padding-top: 60px;
+            height: 100vh;
             position: fixed;
             top: 0;
-            bottom: 0;
-            padding-top: 60px;
-            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3); /* shadow on right side */
-            z-index: 1000; /* ensure it stays above main content */
+            left: 0;
+            overflow-y: auto;
+            z-index: 1000;
         }
 
             .sidebar a {
@@ -49,71 +62,126 @@
                     background-color: #b52a3a;
                 }
 
-        .content {
-            margin-left: 220px; /* same as sidebar width */
-            flex-grow: 1;
-            padding: 20px;
-        }
-
+        /* Header */
         header {
             position: fixed;
             top: 0;
-            left: 220px;
+            left: @(showSidebar ? "220px" : "0");
             right: 0;
             height: 60px;
             background-color: #fff;
             border-bottom: 1px solid #b52a3a;
             display: flex;
+            justify-content: space-between;
             align-items: center;
             padding: 0 20px;
-            z-index: 1000;
+            z-index: 1030;
         }
 
-        main {
-            padding-top: 80px; /* space for header */
+            header h5 {
+                margin: 0;
+            }
+
+            header .header-links a {
+                margin-left: 10px;
+            }
+
+        /* Content area */
+        .content {
+            margin-left: @(showSidebar ? "220px" : "0");
+            padding-top: 80px; /* space for fixed header */
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .sidebar
+
+        {
+            width: 100%;
+            height: auto;
+            position: relative;
+        }
+
+        .content {
+            margin-left: 0;
+            padding-top: 140px; /* extra space if header stacks */
+        }
+
+        header {
+            left: 0 !important;
+        }
+
         }
     </style>
 </head>
 <body>
-    @if (HttpContextAccessor.HttpContext.Session.GetInt32("UserId") != null)
+    @if (showSidebar)
     {
-        <!-- Sidebar -->
         <div class="sidebar">
             <h4 class="text-center mt-3">Portal</h4>
-            <a asp-controller="Home" asp-action="Index">Dashboard</a>
-            <a asp-controller="Students" asp-action="List">Students</a>
-            <a asp-controller="Courses" asp-action="Index">Courses</a>
-            <a asp-controller="Instructor" asp-action="Index">Instructors</a>
-            <a asp-controller="Enrollment" asp-action="Index">Enrollment</a>
-            <a asp-controller="Subjects" asp-action="Index">Subject</a>
-            <a asp-controller="Grades" asp-action="Index">Grades</a>
-            <a asp-controller="Account" asp-action="Logout">Logout</a>
 
-        </div>
+            @if (roleClaim == "Admin")
+            {
+                <a asp-controller="Home" asp-action="Index">Dashboard</a>
+                <a class="dropdown-item" asp-controller="Users" asp-action="Index">Manage Users</a>
+                <a asp-controller="Courses" asp-action="Index">Courses</a>
+                <a asp-controller="Instructor" asp-action="Index">Instructors</a>
+                <a asp-controller="Enrollment" asp-action="Index">Enrollments</a>
+                <a asp-controller="Grades" asp-action="Index">Grades</a>
+            }
 
-        <!-- Header -->
-        <header>
-            <h5 class="mb-0">@ViewData["Title"]</h5>
-        </header>
+            @if (roleClaim == "Teacher")
+            {
+                <a asp-controller="Home" asp-action="Index">Dashboard</a>
+                <a asp-controller="Courses" asp-action="Index">My Courses</a>
+                <a asp-controller="Subjects" asp-action="Index">Subjects</a>
+                <a asp-controller="Grades" asp-action="Index">Grades</a>
+            }
 
-        <!-- Main Content -->
-        <div class="content">
-            <main role="main" class="pb-3">
-                @RenderBody()
-            </main>
+            @if (roleClaim == "Student")
+            {
+                <a asp-controller="Home" asp-action="Index">Dashboard</a>
+                <a asp-controller="Subjects" asp-action="Index">Subjects</a>
+                <a asp-controller="Grades" asp-action="Index">My Grades</a>
+                <a asp-controller="Enrollment" asp-action="Index">Enrollments</a>
+            }
         </div>
     }
-    else
+
+    @if (showHeader)
     {
-        <!-- For login/unauthenticated pages -->
-        <div class="container mt-5">
-            <main role="main" class="pb-3">
-                @RenderBody()
-            </main>
-        </div>
+        <header class="d-flex justify-content-between align-items-center px-3">
+            <h5 class="mb-0">@ViewData["Title"]</h5>
+
+            <div class="dropdown">
+                <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img src="~/images/642902-200.png" alt="User Avatar" width="35" height="35" class="rounded-circle me-2">
+                    <span>@user.Identity.Name</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuButton">
+                    @if (roleClaim == "Admin")
+                    {
+                        <li>                      
+                        </li>
+                    }
+                    <li>
+                        <a class="dropdown-item" asp-controller="Account" asp-action="Logout">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </header>
     }
 
-    <!-- Scripts -->
+
+
+    <div class="content">
+        <main>
+            @RenderBody()
+        </main>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

@@ -1,6 +1,7 @@
-﻿using StudentPortal.Web.Models;
+﻿using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Data.SqlClient;
+using StudentPortal.Web.Models;
+using StudentPortal.Web.Models.Entities;
 
 namespace StudentPortal.Web.Services
 {
@@ -16,7 +17,7 @@ namespace StudentPortal.Web.Services
                 throw new ArgumentException("DefaultConnection string is missing in appsettings.json.");
         }
 
-        public User Login(string username, string password)
+        public AppUser Login(string username, string password)
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
                 return null;
@@ -50,7 +51,7 @@ namespace StudentPortal.Web.Services
                             // ⚠️ Plain-text comparison (temporary only)
                             if (storedPassword != null && password == storedPassword)
                             {
-                                return new User
+                                return new AppUser
                                 {
                                     UserId = reader["UserId"] == DBNull.Value ? 0 : Convert.ToInt32(reader["UserId"]),
                                     Username = reader["Username"]?.ToString(),
@@ -67,7 +68,7 @@ namespace StudentPortal.Web.Services
             return null;
         }
 
-        public User GetProfile(int userId)
+        public AppUser GetProfile(int userId)
         {
             using (var conn = new SqlConnection(connectionString))
             {
@@ -92,7 +93,7 @@ namespace StudentPortal.Web.Services
                     {
                         if (reader.Read())
                         {
-                            return new User
+                            return new AppUser
                             {
                                 UserId = reader["UserId"] == DBNull.Value ? 0 : Convert.ToInt32(reader["UserId"]),
                                 Username = reader["Username"]?.ToString(),
