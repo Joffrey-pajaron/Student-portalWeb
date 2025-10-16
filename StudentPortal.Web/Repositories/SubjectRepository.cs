@@ -26,6 +26,17 @@ namespace StudentPortal.Web.Repositories
             _context = context;
         }
 
+        public async Task<IEnumerable<dynamic>> SearchInstructorsByNameAsync(string name)
+        {
+            var sql = @"
+        SELECT TOP 10 Id, FirstName, LastName
+        FROM Instructors
+        WHERE FirstName LIKE @Search OR LastName LIKE @Search";
+
+            using var conn = _context.CreateConnection();
+            return await conn.QueryAsync(sql, new { Search = "%" + name + "%" });
+        }
+
         // ✅ Get all subjects with instructor names
         public async Task<IEnumerable<SubjectWithInstructor>> GetAllWithInstructorAsync()
         {

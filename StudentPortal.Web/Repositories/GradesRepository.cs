@@ -112,5 +112,33 @@ namespace StudentPortal.Web.Repositories
                 return await connection.ExecuteAsync(sql, new { GradeId = gradeId, Grade = grade });
             }
         }
+        public async Task<IEnumerable<dynamic>> GetAllGradesAsync()
+        {
+            var sql = @"
+        SELECT g.Id AS GradeId, 
+               st.FirstName + ' ' + st.LastName AS StudentName,
+               s.SubjectName, 
+               g.Grade, 
+               g.GradeDate
+        FROM Grades g
+        INNER JOIN Enrollments e ON g.EnrollmentId = e.Id
+        INNER JOIN Students st ON e.StudentId = st.Id
+        INNER JOIN Subjects s ON g.SubjectId = s.SubjectId";
+
+            using (var connection = _context.CreateConnection())
+            {
+                return await connection.QueryAsync(sql);
+            }
+        }
+
+        public async Task<int> DeleteGradeAsync(int gradeId)
+        {
+            var sql = "DELETE FROM Grades WHERE Id = @GradeId";
+            using (var connection = _context.CreateConnection())
+            {
+                return await connection.ExecuteAsync(sql, new { GradeId = gradeId });
+            }
+        }
+
     }
 }

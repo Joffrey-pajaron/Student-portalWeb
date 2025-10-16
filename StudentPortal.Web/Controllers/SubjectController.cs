@@ -20,6 +20,21 @@ namespace StudentPortal.Web.Controllers
         // Renders the subjects page
         public IActionResult Index() => View();
 
+        [HttpGet]
+        public async Task<JsonResult> SearchInstructors(string name)
+        {
+            try
+            {
+                var instructors = await _repo.SearchInstructorsByNameAsync(name);
+                return Json(new { success = 1, data = instructors });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = 0, message = ex.Message });
+            }
+        }
+
+
         // Get all subjects
         [HttpGet]
         public async Task<JsonResult> GetSubjects()

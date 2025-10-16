@@ -1,0 +1,85 @@
+﻿@{
+    ViewData["Title"] = "Admin - Manage Grades";
+}
+
+<div class="container mt-4">
+    <h2>Admin Grade Management</h2>
+    <p class="text-muted">View, edit, and delete all grades</p>
+
+    <table class="table table-bordered" id="adminGradesTable">
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Subject</th>
+                <th>Grade</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            loadAllGrades();
+        });
+
+        function loadAllGrades() {
+            $.get('/Grades/GetAllGrades', function(res) {
+                let tbody = $("#adminGradesTable tbody");
+                tbody.empty();
+
+                if (res.success === 1 && res.data.length > 0) {
+                    res.data.forEach(g => {
+                        tbody.append(`
+                            <tr>
+                                <td>${g.StudentName}</td>
+                                <td>${g.SubjectName}</td>
+                                <td><input type="text" value="${g.Grade ?? ""}" id="grade-${g.GradeId}" class="form-control"/></td>
+                                <td>${g.GradeDate ?? ""}</td>
+                                <td>
+                                    <button class="btn btn-success btn-sm" onclick="updateGrade(${g.GradeId})">Update</button>
+                                    <button class="btn btn-danger btn-sm" onclick="deleteGrade(${g.GradeId})">Delete</button>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                } else {
+                    tbody.append(`<tr><td colspan="5" class="text-center text-muted">No grades found</td></tr>`);
+                }
+            });
+        }
+
+        function updateGrade(id) {
+            let grade = $(`#grade-${id}`).val();
+            $.ajax({
+                url: "/Grades/UpdateGrade",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ id: id, grade: grade }),
+                success: res => {
+                    if (res.success === 1) alert("Grade updated!");
+                    else alert("Update failed.");
+                }
+            });
+        }
+
+        function deleteGrade(id) {
+            if (!confirm("Delete this grade?")) return;
+            $.ajax({
+                url: "/Grades/DeleteGrade",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ id: id }),
+                success: res => {
+                    if (res.success === 1) {
+                        alert("Grade deleted!");
+                        loadAllGrades();
+                    }
+                }
+            });
+        }
+    </script>
+}

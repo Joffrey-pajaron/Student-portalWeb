@@ -37,10 +37,11 @@ namespace StudentPortal.Web.Controllers
             string roleName = user.RoleId switch
             {
                 1 => "Admin",
-                2 => "Instructor",
+                2 => "Teacher",
                 3 => "Student",
                 _ => "User"
             };
+
 
             var claims = new List<Claim>
             {

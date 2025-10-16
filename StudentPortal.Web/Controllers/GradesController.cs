@@ -8,8 +8,7 @@ namespace StudentPortal.Web.Controllers
 {
     [Authorize(Roles = "Admin,Instructor,Student")]
     public class GradesController : Controller
-    {   
-
+    {
         private readonly GradesRepository _gradesRepo;
 
         public GradesController(GradesRepository gradesRepo)
@@ -17,17 +16,33 @@ namespace StudentPortal.Web.Controllers
             _gradesRepo = gradesRepo;
         }
 
-        // Load Grades main page
+        // Default landing — redirect by role
         public IActionResult Index()
         {
-            return View();
+            if (User.IsInRole("Admin"))
+                return RedirectToAction("Admin");
+            else if (User.IsInRole("Instructor"))
+                return RedirectToAction("Teacher");
+            else if (User.IsInRole("Student"))
+                return RedirectToAction("Student");
+
+            return Unauthorized();
         }
+
+        [Authorize(Roles = "Student")]
         public IActionResult Student()
         {
             return View();
         }
 
+        [Authorize(Roles = "Instructor")]
         public IActionResult Teacher()
+        {
+            return View();
+        }
+
+        [Authorize(Roles = "Admin")]
+        public IActionResult Admin()
         {
             return View();
         }
@@ -110,6 +125,23 @@ namespace StudentPortal.Web.Controllers
             var rows = await _gradesRepo.UpdateGradeAsync(request.Id, request.Grade);
             return Json(new { success = rows > 0 ? 1 : 0 });
         }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public async Task<JsonResult> GetAllGrades()
+        {
+            var grades = await _gradesRepo.GetAllGradesAsync();
+            return Json(new { success = 1, data = grades });
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        public async Task<JsonResult> DeleteGrade([FromBody] UpdateGradeRequest request)
+        {
+            var rows = await _gradesRepo.DeleteGradeAsync(request.Id);
+            return Json(new { success = rows > 0 ? 1 : 0 });
+        }
+
 
         // Request DTOs
         public class AddGradeRequest

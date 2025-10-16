@@ -6,7 +6,8 @@
 
 <div class="mb-3">
     <input type="text" id="subjectName" placeholder="Enter subject name" class="form-control mb-2" />
-    <input type="number" id="instructorId" placeholder="Instructor ID (optional)" class="form-control mb-2" />
+    <input type="text" id="instructorName" placeholder="Search Instructor Name" class="form-control mb-2" list="instructorSuggestions" />
+    <datalist id="instructorSuggestions"></datalist>
     <button id="btnAddSubject" class="btn btn-primary">Add Subject</button>
 </div>
 
@@ -44,11 +45,11 @@
             }
         }
 
-        document.getElementById("btnAddSubject").addEventListener("click", async () => {
+             document.getElementById("btnAddSubject").addEventListener("click", async () => {
             const subjectName = document.getElementById("subjectName").value.trim();
-            const instructorId = document.getElementById("instructorId").value;
-
             if (!subjectName) return alert("Subject name is required.");
+
+            const instructorId = selectedInstructorId;
 
             const res = await fetch("/Subjects/Create", {
                 method: "POST",
@@ -63,12 +64,43 @@
             if (data.success === 1) {
                 alert("Subject added successfully!");
                 document.getElementById("subjectName").value = "";
-                document.getElementById("instructorId").value = "";
+                instructorInput.value = "";
+                selectedInstructorId = null;
                 loadSubjects();
             } else {
                 alert(data.message || "Error adding subject.");
             }
         });
+
+
+        const instructorInput = document.getElementById("instructorName");
+        const datalist = document.getElementById("instructorSuggestions");
+        let selectedInstructorId = null;
+
+        instructorInput.addEventListener("input", async () => {
+            const name = instructorInput.value.trim();
+            if (name.length < 2) return; // wait until 2 chars
+
+            const res = await fetch(`/Subjects/SearchInstructors?name=${encodeURIComponent(name)}`);
+            const data = await res.json();
+
+            if (data.success === 1) {
+                datalist.innerHTML = "";
+                data.data.forEach(i => {
+                    const option = document.createElement("option");
+                    option.value = `${i.FirstName} ${i.LastName}`;
+                    option.dataset.id = i.Id;
+                    datalist.appendChild(option);
+                });
+            }
+        });
+
+        // Optional: get selected instructor ID
+        instructorInput.addEventListener("change", () => {
+            const selected = Array.from(datalist.options).find(opt => opt.value === instructorInput.value);
+            selectedInstructorId = selected ? selected.dataset.id : null;
+        });
+
 
         // Load subjects on page load
         loadSubjects();
